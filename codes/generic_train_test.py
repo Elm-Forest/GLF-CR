@@ -1,7 +1,7 @@
 import torch
 from torch.cuda.amp import GradScaler, autocast
 
-from codes.metrics import PSNR, SSIM
+from metrics import PSNR, SSIM
 
 
 class Generic_train_test():
