@@ -37,6 +37,7 @@ def test(CR_net, opts):
 
         print(iters, '  psnr_13:', format(psnr_13, '.4f'), '  ssim_13:', format(ssim_13, '.4f'))
         vis(pred_cloudfree_data)
+        vis(cloudfree_data,'original')
         # return pred_cloudfree_data
 
 
@@ -48,8 +49,8 @@ def main():
     parser.add_argument('--batch_sz', type=int, default=1, help='batch size used for training')
 
     parser.add_argument('--load_size', type=int, default=256)
-    parser.add_argument('--crop_size', type=int, default=128)
-    parser.add_argument('--input_data_folder', type=str, default='../data')
+    parser.add_argument('--crop_size', type=int, default=256)
+    parser.add_argument('--input_data_folder', type=str, default='K:\dataset\selected_data_folder')
     parser.add_argument('--data_list_filepath', type=str, default='../data/data.csv')
 
     parser.add_argument('--is_test', type=bool, default=True)
@@ -59,8 +60,27 @@ def main():
     opts = parser.parse_args()
 
     CR_net = RDN_residual_CR(opts.crop_size).cuda()
-    checkpoint = torch.load('../ckpt/CR_net.pth')
-    CR_net.load_state_dict(checkpoint['network'])
+    checkpoint = torch.load('../ckpt/0_net_CR.pth')
+
+    # CR_net.load_state_dict(checkpoint['network'])
+
+    def remove_module_prefix(state_dict):
+        """从权重字典的键中移除'module.'前缀"""
+        new_state_dict = {}
+        for key, value in state_dict.items():
+            if key.startswith('module.'):
+                new_key = key[7:]  # 跳过前面的'module.'部分
+            else:
+                new_key = key
+            new_state_dict[new_key] = value
+        return new_state_dict
+
+    # 假设checkpoint是你加载的权重字典
+    checkpoint_state_dict = checkpoint['network']
+    # 移除'module.'前缀
+    filtered_checkpoint_state_dict = remove_module_prefix(checkpoint_state_dict)
+    # 加载修改后的权重到模型
+    CR_net.load_state_dict(filtered_checkpoint_state_dict, strict=False)
 
     CR_net.eval()
     for _, param in CR_net.named_parameters():
@@ -69,7 +89,7 @@ def main():
     test(CR_net, opts)
 
 
-def vis(pred):
+def vis(pred, title='predicted'):
     # 将张量从CUDA移动到CPU，并转换为NumPy数组
     pred_np = pred.cpu().numpy()
 
@@ -79,17 +99,13 @@ def vis(pred):
     B_channel = pred_np[0, 1, :, :]
 
     # 标准化通道到[0, 1]范围内以便显示
-    R_channel_normalized = (R_channel - R_channel.min()) / (R_channel.max() - R_channel.min())
-    G_channel_normalized = (G_channel - G_channel.min()) / (G_channel.max() - G_channel.min())
-    B_channel_normalized = (B_channel - B_channel.min()) / (B_channel.max() - B_channel.min())
-
-    # 组合RGB通道制作3通道RGB图像
-    rgb_image = np.stack([R_channel_normalized, G_channel_normalized, B_channel_normalized], axis=-1)
+    from show_img import get_rgb_preview
+    rgb_image = get_rgb_preview(R_channel, G_channel, B_channel)
 
     # 绘制图像
     plt.figure(figsize=(6, 6))
     plt.imshow(rgb_image)
-    plt.title("Predicted RGB Image")
+    plt.title(title)
     plt.axis('off')  # 关闭坐标轴标号和刻度
     plt.show()
 

@@ -19,22 +19,27 @@ class Generic_train_test():
     def validate(self):
         """在验证集上评估模型性能。"""
         self.model.net_G.eval()  # 设置为评估模式
+        total_steps = 0
         val_loss = 0.0
         val_ssim = 0.0
         val_psnr = 0.0
         with torch.no_grad():  # 关闭梯度计算
             for _, data in enumerate(self.val_dataloader):
+                total_steps += 1
                 _input = self.decode_input(data)
                 with autocast():
                     pred_Cloudfree_data = self.model.forward()
                     loss_G = self.model.loss_fn(pred_Cloudfree_data, self.model.cloudfree_data)
                     psnr = PSNR(pred_Cloudfree_data, self.model.cloudfree_data)
-
                     ssim = SSIM(pred_Cloudfree_data, self.model.cloudfree_data)
+                    if total_steps % self.opts.log_freq == 0:
+                        print('steps', total_steps, 'val_loss', loss_G, 'psnr', psnr, 'ssim', ssim)
                 val_loss += loss_G.item()
                 val_ssim += ssim.item()
                 val_psnr += psnr
         val_loss /= len(self.val_dataloader)
+        val_psnr /= len(self.val_dataloader)
+        val_ssim /= len(self.val_dataloader)
         self.model.net_G.train()  # 将模型设置回训练模式
         return val_loss, val_psnr, val_ssim
 
@@ -81,6 +86,7 @@ class Generic_train_test():
                     log_loss = 0
 
             if epoch % self.opts.save_freq == 0:
+                print('validating~~')
                 val_loss, val_psnr, val_ssim = self.validate()  # 进行验证
                 print(f'Validation Loss after epoch {epoch}: {val_loss},  PSNR:{val_psnr},SSSIM:{val_ssim}')
 
