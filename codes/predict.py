@@ -15,14 +15,13 @@ from net_CR_RDN import RDN_residual_CR
 ##########################################################
 def test(CR_net, opts):
     _, _, test_filelist = get_train_val_test_filelists(opts.data_list_filepath)
+    print(test_filelist)
 
     data = AlignedDataset(opts, test_filelist)
-
+    print(data)
     dataloader = torch.utils.data.DataLoader(dataset=data, batch_size=opts.batch_sz, shuffle=True)
 
     iters = 0
-    PSNR_13 = 0
-    SSIM_13 = 0
     for inputs in dataloader:
         cloudy_data = inputs['cloudy_data'].cuda()
         cloudfree_data = inputs['cloudfree_data'].cuda()
@@ -37,9 +36,12 @@ def test(CR_net, opts):
 
         print(iters, '  psnr_13:', format(psnr_13, '.4f'), '  ssim_13:', format(ssim_13, '.4f'))
         vis(pred_cloudfree_data)
+        vis(cloudy_data, msg='cloudy')
+        vis(cloudfree_data, msg='cloudfree')
         # return pred_cloudfree_data
 
 
+# ROIs1158_spring_134_p59.tif
 def main():
     os.environ["CUDA_VISIBLE_DEVICES"] = '0'
 
@@ -48,8 +50,8 @@ def main():
     parser.add_argument('--batch_sz', type=int, default=1, help='batch size used for training')
 
     parser.add_argument('--load_size', type=int, default=256)
-    parser.add_argument('--crop_size', type=int, default=128)
-    parser.add_argument('--input_data_folder', type=str, default='../data')
+    parser.add_argument('--crop_size', type=int, default=256)
+    parser.add_argument('--input_data_folder', type=str, default='K:\dataset\selected_data_folder')
     parser.add_argument('--data_list_filepath', type=str, default='../data/data.csv')
 
     parser.add_argument('--is_test', type=bool, default=True)
@@ -69,7 +71,7 @@ def main():
     test(CR_net, opts)
 
 
-def vis(pred):
+def vis(pred, msg='predicted'):
     # 将张量从CUDA移动到CPU，并转换为NumPy数组
     pred_np = pred.cpu().numpy()
 
@@ -79,17 +81,18 @@ def vis(pred):
     B_channel = pred_np[0, 1, :, :]
 
     # 标准化通道到[0, 1]范围内以便显示
-    R_channel_normalized = (R_channel - R_channel.min()) / (R_channel.max() - R_channel.min())
-    G_channel_normalized = (G_channel - G_channel.min()) / (G_channel.max() - G_channel.min())
-    B_channel_normalized = (B_channel - B_channel.min()) / (B_channel.max() - B_channel.min())
-
+    # R_channel_normalized = (R_channel - R_channel.min()) / (R_channel.max() - R_channel.min())
+    # G_channel_normalized = (G_channel - G_channel.min()) / (G_channel.max() - G_channel.min())
+    # B_channel_normalized = (B_channel - B_channel.min()) / (B_channel.max() - B_channel.min())
+    from codes.show_img import get_rgb_preview
+    rgb_image = get_rgb_preview(R_channel, G_channel, B_channel)
     # 组合RGB通道制作3通道RGB图像
-    rgb_image = np.stack([R_channel_normalized, G_channel_normalized, B_channel_normalized], axis=-1)
+    # rgb_image = np.stack([R_channel_normalized, G_channel_normalized, B_channel_normalized], axis=-1)
 
     # 绘制图像
     plt.figure(figsize=(6, 6))
     plt.imshow(rgb_image)
-    plt.title("Predicted RGB Image")
+    plt.title(msg)
     plt.axis('off')  # 关闭坐标轴标号和刻度
     plt.show()
 
