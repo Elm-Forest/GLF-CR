@@ -59,7 +59,12 @@ val_dataloader = torch.utils.data.DataLoader(dataset=train_data, batch_size=opts
 model = ModelCRNet(opts)
 if opts.checkpoint is not None:
     checkpoint = torch.load(opts.checkpoint)
-    model.net_G.load_state_dict(checkpoint['network'], strict=False)
+    try:
+        model.net_G.load_state_dict(checkpoint['network'], strict=True)
+    except Exception as e:
+        print('Some problems happened during loading Weights: ', e)
+        model.net_G.load_state_dict(checkpoint['network'], strict=False)
+    print('Loading Pretraining/Checkpoints Weights')
 
 
 ##===================================================##
