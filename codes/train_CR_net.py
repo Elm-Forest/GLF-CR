@@ -70,7 +70,7 @@ if opts.checkpoint is not None:
     CR_net = RDN_residual_CR(opts.crop_size).cuda()
     checkpoint = torch.load(opts.checkpoint)
     try:
-            CR_net.load_state_dict(checkpoint['network'], strict=True)
+        CR_net.load_state_dict(checkpoint['network'], strict=True)
     except Exception as e:
         print('Some problems happened during loading Weights: ', e)
         try:
@@ -80,7 +80,9 @@ if opts.checkpoint is not None:
             filtered_checkpoint_state_dict = {k: v for k, v in checkpoint_state_dict.items() if k not in skip_keys}
             CR_net.load_state_dict(filtered_checkpoint_state_dict, strict=False)
     print('Finished loading Pretraining/Checkpoints Weights')
-    model.net_G = CR_net
+    model.loading_model(CR_net)
+else:
+    model.init()
 
 
 ##===================================================##
