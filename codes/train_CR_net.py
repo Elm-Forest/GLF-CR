@@ -33,7 +33,7 @@ parser.add_argument('--is_test', type=bool, default=False)
 parser.add_argument('--gpu_ids', type=str, default='0')
 parser.add_argument('--fake_batchsize', type=int, default=4)
 parser.add_argument('--val_bs', type=int, default=1)
-parser.add_argument('--checkpoint', type=str, default=None)
+parser.add_argument('--checkpoint', type=str, default="E:\Development Program\Pycharm Program\GLF-CR\ckpt\CR_net.pth")
 opts = parser.parse_args()
 print_options(opts)
 
@@ -57,14 +57,30 @@ val_dataloader = torch.utils.data.DataLoader(dataset=train_data, batch_size=opts
 ##****************** Create model *******************##
 ##===================================================##
 model = ModelCRNet(opts)
+
 if opts.checkpoint is not None:
+    skip_keys = [
+        "RDBs.0.convs.1.attn_mask", "RDBs.0.convs.3.attn_mask",
+        "RDBs.1.convs.1.attn_mask", "RDBs.1.convs.3.attn_mask",
+        "RDBs.2.convs.1.attn_mask", "RDBs.2.convs.3.attn_mask",
+        "RDBs.3.convs.1.attn_mask", "RDBs.3.convs.3.attn_mask",
+        "RDBs.4.convs.1.attn_mask", "RDBs.4.convs.3.attn_mask",
+        "RDBs.5.convs.1.attn_mask", "RDBs.5.convs.3.attn_mask"
+    ]
+    CR_net = RDN_residual_CR(opts.crop_size).cuda()
     checkpoint = torch.load(opts.checkpoint)
     try:
-        model.net_G.load_state_dict(checkpoint['network'], strict=True)
+            CR_net.load_state_dict(checkpoint['network'], strict=True)
     except Exception as e:
         print('Some problems happened during loading Weights: ', e)
-        model.net_G.load_state_dict(checkpoint['network'], strict=False)
-    print('Loading Pretraining/Checkpoints Weights')
+        try:
+            CR_net.load_state_dict(checkpoint['network'], strict=False)
+        except:
+            checkpoint_state_dict = checkpoint['network']
+            filtered_checkpoint_state_dict = {k: v for k, v in checkpoint_state_dict.items() if k not in skip_keys}
+            CR_net.load_state_dict(filtered_checkpoint_state_dict, strict=False)
+    print('Finished loading Pretraining/Checkpoints Weights')
+    model.net_G = CR_net
 
 
 ##===================================================##
