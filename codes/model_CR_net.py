@@ -1,4 +1,3 @@
-from MS_SSIM_L1_loss import MS_SSIM_L1_LOSS
 from metrics import *
 from model_base import *
 from net_CR_RDN import *
@@ -11,8 +10,8 @@ class ModelCRNet(ModelBase):
         self.lr_scheduler = None
         self.optimizer_G = None
         self.opts = opts
-        # self.loss_fn = nn.L1Loss()
-        self.loss_fn = MS_SSIM_L1_LOSS(channel=13)
+        self.loss_fn = nn.L1Loss()
+        # self.loss_fn = MS_SSIM_L1_LOSS(channel=13)
 
     def init(self):
         # create network

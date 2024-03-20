@@ -295,7 +295,6 @@ class RDB_Conv(nn.Module):
             attn_mask = attn_mask.masked_fill(attn_mask != 0, float(-100.0)).masked_fill(attn_mask == 0, float(0.0))
         else:
             attn_mask = None
-
         self.register_buffer("attn_mask", attn_mask)
 
     def forward(self, inputs):
@@ -506,14 +505,7 @@ class RDN_residual_CR(nn.Module):
 
         kernel_sar = self.DF[i](OPT_m, SAR_m)
 
-        # 禁用 autocast
-        with torch.cuda.amp.autocast(enabled=False):
-            SAR_m = SAR_m.float()  # 确保转换为 Float
-            kernel_sar = kernel_sar.float()
-            SAR_m = self.DFR[i](SAR_m, kernel_sar)
-        # 继续其他操作，此时不需要转换回 Half，因为 autocast 会在外层重新启用
-
-        # SAR_m = self.DFR[i](SAR_m, kernel_sar)
+        SAR_m = self.DFR[i](SAR_m, kernel_sar)
 
         sar_s = self.sar_fuse_1x1conv[i](SAR_m - OPT_m)
         sar_fuse_gate = torch.sigmoid(sar_s) # compute the gate 
