@@ -35,6 +35,7 @@ parser.add_argument('--fake_batchsize', type=int, default=4)
 parser.add_argument('--val_bs', type=int, default=1)
 parser.add_argument('--checkpoint', type=str, default="E:\Development Program\Pycharm Program\GLF-CR\ckpt\CR_net.pth")
 parser.add_argument('--frozen', type=bool, default=False)
+parser.add_argument('--speed', type=bool, default=False)
 opts = parser.parse_args()
 print_options(opts)
 
@@ -91,7 +92,8 @@ if opts.frozen and opts.checkpoint is not None:
         else:
             print(name)
 
-
+if opts.speed:
+    model.speed()
 ##===================================================##
 ##**************** Train the network ****************##
 ##===================================================##

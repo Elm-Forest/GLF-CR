@@ -66,3 +66,6 @@ class ModelCRNet(ModelBase):
         if self.opts.optimizer == 'Adam':
             self.optimizer_G = torch.optim.Adam(self.net_G.parameters(), lr=self.opts.lr)
             self.lr_scheduler = lr_scheduler.StepLR(self.optimizer_G, step_size=self.opts.lr_step, gamma=0.5)
+
+    def speed(self):
+        self.net_G = torch.compile(self.net_G, backend="inductor")

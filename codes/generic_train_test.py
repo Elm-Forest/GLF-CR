@@ -25,6 +25,7 @@ class Generic_train_test():
             for _, data in enumerate(self.val_dataloader):
                 total_steps += 1
                 _input = self.decode_input(data)
+                self.model.set_input(_input)
                 pred_Cloudfree_data = self.model.forward()
                 loss_G = self.model.loss_fn(pred_Cloudfree_data, self.model.cloudfree_data)
                 psnr = PSNR(pred_Cloudfree_data, self.model.cloudfree_data)
@@ -81,7 +82,7 @@ class Generic_train_test():
             if epoch % self.opts.save_freq == 0:
                 print('validating~~')
                 val_loss, val_psnr, val_ssim = self.validate()  # 进行验证
-                print(f'Validation Loss after epoch {epoch}: {val_loss},  PSNR:{val_psnr},SSSIM:{val_ssim}')
+                print(f'Validation Loss after epoch {epoch}: {val_loss},  PSNR:{val_psnr},SSIM:{val_ssim}')
 
                 self.model.save_checkpoint(epoch)
 
